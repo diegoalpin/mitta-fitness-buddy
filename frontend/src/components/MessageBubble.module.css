@@ -1,0 +1,26 @@
+/* Distinction is by alignment and surface, not by saturated colour. */
+
+.userRow {
+  display: flex;
+  justify-content: flex-end;
+  margin: var(--space-6) 0;
+}
+
+.assistantRow {
+  display: block;
+  margin: var(--space-6) 0;
+}
+
+.userBubble {
+  max-width: 85%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.assistantBody {
+  overflow-wrap: anywhere;
+}

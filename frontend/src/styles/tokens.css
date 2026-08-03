@@ -1,0 +1,64 @@
+/*
+ * The entire visual system. No component may hardcode a colour or a pixel
+ * value — if you need one that isn't here, add it here first.
+ *
+ * ANTI-SLOP CONSTRAINTS. These are deliberate. Do not relax them casually:
+ *   - No purple/blue gradients. No gradient text. No glassmorphism blur.
+ *   - No box-shadow for elevation. Hairline --border only.
+ *   - No emoji as UI iconography.
+ *   - Exactly ONE accent colour, used for focus, links, and the send
+ *     affordance. Nothing else competes for attention.
+ *   - Motion only where it communicates state. No entrance animations.
+ */
+
+:root {
+  /* ---- Typography ---------------------------------------------------- */
+  /* Swap these two lines to change the whole app's type. */
+  --font-sans: 'Instrument Sans Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+
+  /* A restrained scale. Chat is a reading interface; four sizes is plenty. */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.25rem;
+
+  --leading-tight: 1.3;
+  --leading-normal: 1.65; /* generous — assistant answers are long */
+
+  /* ---- Colour -------------------------------------------------------- */
+  /* Near-black with a faint cool cast. Pure #000 reads as a void and makes
+     hairline borders impossible to place. */
+  --bg: #0b0c0e;
+  --surface: #131417;         /* message bubbles, composer */
+  --surface-raised: #1a1c20;  /* hover, tool badges */
+
+  --border: #24262b;          /* hairline, 1px, never a shadow */
+  --border-strong: #33363d;   /* focus rings, active states */
+
+  --text-primary: #e8e9ea;
+  --text-secondary: #9ca0a8;  /* timestamps, tool labels */
+  --text-muted: #63676f;      /* placeholder, disabled */
+
+  /* One accent. Desaturated teal reads as instrumentation, not marketing. */
+  --accent: #4db6a4;
+  --accent-dim: #2d6b60;
+  --danger: #d9705f;
+
+  /* ---- Space --------------------------------------------------------- */
+  /* A 4px base scale. Every margin and padding in the app uses one of these. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  /* Reading width. Long training answers become unreadable past ~70ch. */
+  --measure: 68ch;
+}

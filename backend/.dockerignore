@@ -1,0 +1,24 @@
+# Secrets. These must never reach the build context, let alone a layer.
+.env
+.env.*
+
+# Reinstalled inside the image for the correct platform.
+node_modules
+
+# Rebuilt by `npm run build`.
+dist
+
+# Docs and editor/OS noise.
+*.md
+.DS_Store
+.vscode
+.idea
+
+# Build/tooling artifacts.
+*.log
+npm-debug.log*
+.npm
+coverage
+
+Dockerfile
+.dockerignore

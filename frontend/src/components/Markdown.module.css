@@ -1,0 +1,107 @@
+.prose > :first-child {
+  margin-top: 0;
+}
+
+.prose > :last-child {
+  margin-bottom: 0;
+}
+
+.prose p,
+.prose ul,
+.prose ol,
+.prose blockquote {
+  margin: var(--space-3) 0;
+}
+
+.prose h1,
+.prose h2,
+.prose h3 {
+  margin: var(--space-6) 0 var(--space-3);
+  line-height: var(--leading-tight);
+  font-weight: 600;
+}
+
+.prose h1 { font-size: var(--text-lg); }
+.prose h2 { font-size: var(--text-base); }
+.prose h3 { font-size: var(--text-base); color: var(--text-secondary); }
+
+.prose ul,
+.prose ol {
+  padding-left: var(--space-6);
+}
+
+.prose li {
+  margin: var(--space-1) 0;
+}
+
+.prose blockquote {
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--border-strong);
+  color: var(--text-secondary);
+}
+
+.prose code {
+  background: var(--surface-raised);
+  padding: 0.1em 0.35em;
+  border-radius: var(--radius-sm);
+}
+
+.prose pre {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  overflow-x: auto;
+  margin: var(--space-3) 0;
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: var(--space-6) 0;
+}
+
+/* ---- Tables -------------------------------------------------------- */
+/* The scroll container is the whole reason `table` is overridden in
+   Markdown.tsx. Without it, wide training tables push the page sideways. */
+.tableWrap {
+  overflow-x: auto;
+  margin: var(--space-4) 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.tableWrap table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: var(--text-sm);
+  /* Numbers must line up column to column. */
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.tableWrap th,
+.tableWrap td {
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+
+.tableWrap th {
+  background: var(--surface-raised);
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tableWrap tr:last-child td {
+  border-bottom: none;
+}

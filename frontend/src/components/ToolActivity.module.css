@@ -1,0 +1,58 @@
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.marker {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  transform: translateY(-1px);
+}
+
+.running .marker {
+  background: var(--accent);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.done .marker {
+  background: var(--accent-dim);
+}
+
+.failed .marker {
+  background: var(--danger);
+}
+
+.failed .name {
+  color: var(--danger);
+}
+
+.name {
+  font-variant-numeric: tabular-nums;
+}
+
+.detail {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+/* Motion only where it communicates state — here, "still working". */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
