@@ -35,6 +35,52 @@ function requiredProvider(): LlmProvider {
   return value;
 }
 
+/**
+ * How hard a reasoning model thinks before answering, passed through to
+ * OpenRouter untouched. This is OpenRouter's own set of values.
+ *
+ * Unset by default: the Free Router fans a request out across whichever free
+ * models are available, most of which do not reason at all, and constraining
+ * every one of them to suit a single model would be wrong.
+ */
+const REASONING_EFFORTS = [
+  'none',
+  'minimal',
+  'low',
+  'medium',
+  'high',
+  'xhigh',
+  'max',
+] as const;
+
+export type ReasoningEffort = (typeof REASONING_EFFORTS)[number];
+
+function optionalReasoningEffort(): ReasoningEffort | undefined {
+  const value = process.env.OPENROUTER_REASONING_EFFORT;
+  if (!value) return undefined;
+  // The widening cast is only so a plain string can be tested against a
+  // readonly tuple; the predicate is what actually narrows.
+  if (!(REASONING_EFFORTS as readonly string[]).includes(value)) {
+    throw new Error(
+      `OPENROUTER_REASONING_EFFORT must be one of ${REASONING_EFFORTS.join('|')}, ` +
+        `got "${value}"`,
+    );
+  }
+  return value as ReasoningEffort;
+}
+
+function requiredOpenrouterMaxTokens(): number {
+  const raw = process.env.OPENROUTER_MAX_TOKENS;
+  if (!raw) return 8192;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(
+      `OPENROUTER_MAX_TOKENS must be a positive integer, got "${raw}"`,
+    );
+  }
+  return value;
+}
+
 /** How much detail src/log.ts prints. See that file for what each level shows. */
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -68,8 +114,20 @@ export const config = {
   // tool-capable models instead of pinning one. Pinning a single free model
   // (google/gemma-4-31b-it:free, say) means inheriting that model's shared
   // upstream pool, which returns 429 for long stretches. Set OPENROUTER_MODEL
-  // to a specific slug when you need to evaluate one model in particular.
+  // to a specific slug when you need to evaluate one model in particular —
+  // "openai/gpt-5.6-luna" is the tested paid option; see .env.example for the
+  // two settings below that it wants alongside.
   openrouterModel: process.env.OPENROUTER_MODEL ?? 'openrouter/free',
+
+  // Caps one model turn. On a non-reasoning model this bounds the visible
+  // answer alone; on a reasoning model such as gpt-5.6-luna the hidden
+  // reasoning tokens are drawn from the SAME budget, so a value sized for the
+  // answer can be spent thinking and return nothing. The default stays at the
+  // free-tier figure because many free models cap their own output near there
+  // and reject a larger request outright — raise it when you pin a paid model.
+  openrouterMaxTokens: requiredOpenrouterMaxTokens(),
+
+  openrouterReasoningEffort: optionalReasoningEffort(),
 
   // Not required: Render injects PORT, local dev falls back.
   port: Number(process.env.PORT ?? 8787),

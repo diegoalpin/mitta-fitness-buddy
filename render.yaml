@@ -34,6 +34,22 @@ services:
         sync: false
       - key: LLM_PROVIDER
         value: openrouter
+      # GPT-5.6 Luna: a paid reasoning model at $0.10/$0.60 per million tokens,
+      # chosen over the free default for its tool calling, which is where the
+      # free models fall down. THIS DEPLOYMENT BILLS PER REQUEST. To go back to
+      # zero inference cost, drop these three keys — OPENROUTER_MODEL then
+      # defaults to openrouter/free and the other two are ignored.
+      - key: OPENROUTER_MODEL
+        value: openai/gpt-5.6-luna
+      # Reasoning tokens are drawn from the same budget as the answer, so this
+      # is sized for both. The model's ceiling is 128000.
+      - key: OPENROUTER_MAX_TOKENS
+        value: 32000
+      # This is a latency-sensitive chat UI and Luna is built for exactly that;
+      # a higher effort mostly adds time the user spends watching an empty
+      # bubble. Raise it if multi-step questions come back shallow.
+      - key: OPENROUTER_REASONING_EFFORT
+        value: low
       # PORT is deliberately unset: Render injects 10000 and config.ts only
       # falls back to 8787 when nothing is provided. The private network bars
       # port 10000, but this setup proxies over the public URL, so it is moot.
