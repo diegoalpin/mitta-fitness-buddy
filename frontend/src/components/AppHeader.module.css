@@ -1,0 +1,70 @@
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/*
+ * The lockup PNG has a baked-in near-black background (#050507) which reads as
+ * a darker rectangle against --bg (#0b0c0e). `lighten` keeps the brighter of
+ * source and backdrop per channel: the page wins everywhere the logo is darker
+ * than it, the wordmark and tagline win everywhere they are lighter. The baked
+ * background disappears, rounded-corner antialiasing included.
+ *
+ * This is a compositing fix, not decoration. If it ever misbehaves, the fallback
+ * is to set .header's background to #050507 so the logo blends into a
+ * deliberately darker bar. Do not reach for a filter.
+ */
+.logo {
+  display: block;
+  height: 50px;
+  width: auto;
+  mix-blend-mode: lighten;
+}
+
+.actions {
+  margin-left: auto;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.action {
+  padding: var(--space-2) var(--space-3);
+
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+
+  transition:
+    color 120ms,
+    background-color 120ms,
+    border-color 120ms;
+}
+
+.action:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: var(--surface-raised);
+  border-color: var(--border-strong);
+}
+
+.action:disabled {
+  color: var(--text-muted);
+}
+
+@media (max-width: 480px) {
+  .logo {
+    height: 22px;
+  }
+
+  .action {
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--text-xs);
+  }
+}

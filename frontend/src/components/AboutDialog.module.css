@@ -1,0 +1,72 @@
+/*
+ * <dialog> ships a UA border and `color: canvastext`. Both must be overridden
+ * explicitly or the panel renders as a light box with a black outline.
+ */
+.dialog {
+  max-width: min(42ch, calc(100vw - var(--space-8)));
+  max-height: calc(100dvh - var(--space-8));
+  overflow-y: auto;
+
+  padding: var(--space-6);
+
+  color: var(--text-primary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+/* No backdrop-filter — tokens.css forbids glassmorphism. */
+.dialog::backdrop {
+  background: rgb(0 0 0 / 0.6);
+}
+
+.banner {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Reserves the box so the text below does not jump when the image decodes,
+     and holds the layout if it never loads at all. */
+  aspect-ratio: 408 / 340;
+  object-fit: cover;
+
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-md);
+}
+
+.title {
+  font-size: var(--text-lg);
+  line-height: var(--leading-tight);
+  margin-bottom: var(--space-3);
+}
+
+/* global.css zeroes every margin, so paragraph spacing is set here. */
+.body p + p {
+  margin-top: var(--space-3);
+}
+
+/*
+ * Deliberately duplicated from AppHeader.module.css rather than extracted.
+ * Two call sites do not justify a shared Button component.
+ */
+.close {
+  display: block;
+  margin-top: var(--space-6);
+  margin-left: auto;
+  padding: var(--space-2) var(--space-3);
+
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+
+  transition:
+    color 120ms,
+    border-color 120ms;
+}
+
+.close:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}

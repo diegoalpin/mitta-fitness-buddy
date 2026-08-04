@@ -1,0 +1,27 @@
+# Secrets and local overrides. Build-time config arrives via --build-arg (see
+# VITE_LOG_LEVEL in the Dockerfile), never from a file in the context — a Vite
+# build inlines whatever it reads into the bundle.
+.env
+.env.*
+*.local
+
+# Reinstalled inside the image for the correct platform.
+node_modules
+
+# Rebuilt by `npm run build`.
+dist
+
+# Docs and editor/OS noise.
+*.md
+.DS_Store
+.vscode
+.idea
+
+# Build/tooling artifacts.
+*.log
+npm-debug.log*
+.npm
+coverage
+
+Dockerfile
+.dockerignore

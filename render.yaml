@@ -1,0 +1,61 @@
+# Blueprint for both services in this repo — Render supports monorepos, so the
+# frontend and backend do not need separate repos.
+#
+# dockerfilePath and dockerContext are relative to the REPO ROOT, not to any
+# rootDir, which is why no rootDir is set here: buildFilter already scopes
+# autodeploys, and mixing the two invites confusion about what a path is
+# relative to. Changes to this file are always processed regardless of filters.
+#   https://render.com/docs/blueprint-spec
+
+services:
+  # --- backend --------------------------------------------------------------
+  - name: smart-coach-buddy-backend
+    type: web
+    runtime: docker
+    plan: free
+    # Keep both services in the same region; change them together.
+    region: oregon
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    # Liveness only, per routes/health.ts — it deliberately does not probe MCP
+    # or the LLM provider.
+    healthCheckPath: /healthz
+    buildFilter:
+      paths:
+        - backend/**
+    envVars:
+      # sync:false means "set this in the dashboard, not in the repo" — the
+      # value is never written here and a Blueprint sync will not clear it.
+      - key: MCP_SERVER_URL
+        sync: false
+      - key: MCP_BEARER_TOKEN
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: LLM_PROVIDER
+        value: anthropic
+      # PORT is deliberately unset: Render injects 10000 and config.ts only
+      # falls back to 8787 when nothing is provided. The private network bars
+      # port 10000, but this setup proxies over the public URL, so it is moot.
+
+  # --- frontend -------------------------------------------------------------
+  - name: smart-coach-buddy-frontend
+    type: web
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    # Serves index.html. Static only — a backend outage must not take the
+    # frontend down with it.
+    healthCheckPath: /
+    buildFilter:
+      paths:
+        - frontend/**
+    envVars:
+      # The backend's public https://<name>.onrender.com URL, with NO trailing
+      # slash. Set by hand after the backend's first deploy: free services can
+      # send private-network requests but cannot receive them, so fromService's
+      # internal hostname is not usable while the backend is on the free plan.
+      - key: BACKEND_URL
+        sync: false

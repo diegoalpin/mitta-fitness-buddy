@@ -51,7 +51,13 @@ export function useChat() {
   // A ref, not state: replacing the controller must not trigger a render.
   const abortRef = useRef<AbortController | null>(null);
 
+  // Bumped by reset(). A turn captures this value when it starts and stops
+  // writing state the moment it no longer matches — see the guards in run()
+  // and the comment on reset() for why that is not optional.
+  const generationRef = useRef(0);
+
   const run = useCallback(async (history: ChatMessage[]) => {
+    const generation = generationRef.current;
     const controller = new AbortController();
     abortRef.current = controller;
 
@@ -68,6 +74,11 @@ export function useChat() {
 
     try {
       for await (const event of streamChat(history, controller.signal)) {
+        // A New Chat landed mid-turn. Bail before touching any state: an event
+        // arriving between the abort and the throw would otherwise resurrect
+        // text the user just discarded.
+        if (generationRef.current !== generation) return;
+
         switch (event.type) {
           case 'text': {
             accumulated += event.text;
@@ -124,30 +135,42 @@ export function useChat() {
       } else {
         failed = true;
         log.error('turn failed', { message: (err as Error | undefined)?.message ?? String(err) });
-        setError({
-          kind: 'unknown',
-          message: 'The connection dropped. Try again.',
-        });
+        // Same generation check as the finally block: a real failure landing in
+        // the same tick as a New Chat must not post its banner to the fresh chat.
+        if (generationRef.current === generation) {
+          setError({
+            kind: 'unknown',
+            message: 'The connection dropped. Try again.',
+          });
+        }
       }
     } finally {
-      abortRef.current = null;
+      // A New Chat during this turn bumped the generation. Everything below
+      // writes conversation state, and the commit in particular would drop this
+      // turn's partial answer into the conversation the user just cleared —
+      // aborting a stream unwinds straight through here. Guard as a wrapper
+      // rather than an early return: a `return` inside finally would also
+      // swallow an in-flight exception.
+      if (generationRef.current === generation) {
+        abortRef.current = null;
 
-      // Commit whatever text arrived, including on a stop or a mid-stream
-      // failure — a partial answer is worth more to the user than nothing.
-      if (accumulated.length > 0) {
-        setMessages((prev) => [...prev, { role: 'assistant', content: accumulated }]);
-      } else if (!failed) {
-        // Finished cleanly but said nothing. Better to say so than to render
-        // an empty bubble the user cannot tell apart from a rendering bug.
-        setError({
-          kind: 'unknown',
-          message: 'The assistant returned an empty response. Try again.',
-        });
+        // Commit whatever text arrived, including on a stop or a mid-stream
+        // failure — a partial answer is worth more to the user than nothing.
+        if (accumulated.length > 0) {
+          setMessages((prev) => [...prev, { role: 'assistant', content: accumulated }]);
+        } else if (!failed) {
+          // Finished cleanly but said nothing. Better to say so than to render
+          // an empty bubble the user cannot tell apart from a rendering bug.
+          setError({
+            kind: 'unknown',
+            message: 'The assistant returned an empty response. Try again.',
+          });
+        }
+
+        setDraft('');
+        setActivity([]);
+        setPhase('idle');
       }
-
-      setDraft('');
-      setActivity([]);
-      setPhase('idle');
     }
   }, []);
 
@@ -165,6 +188,28 @@ export function useChat() {
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
+  }, []);
+
+  /**
+   * Discards the conversation and starts over. There is no history feature, so
+   * this is genuinely destructive — it is deliberately not offered while the
+   * chat is already empty.
+   *
+   * Bumping the generation BEFORE aborting is the whole trick. run()'s finally
+   * block commits any accumulated text, and an abort unwinds through it; done
+   * in the other order, the dying turn would append half of the old answer to
+   * the conversation we just emptied.
+   */
+  const reset = useCallback(() => {
+    generationRef.current += 1;
+    abortRef.current?.abort();
+    abortRef.current = null;
+
+    setMessages([]);
+    setDraft('');
+    setActivity([]);
+    setError(null);
+    setPhase('idle');
   }, []);
 
   const retry = useCallback(() => {
@@ -187,5 +232,5 @@ export function useChat() {
     void run(history);
   }, [messages, phase, run]);
 
-  return { messages, draft, activity, phase, error, send, stop, retry };
+  return { messages, draft, activity, phase, error, send, stop, retry, reset };
 }
