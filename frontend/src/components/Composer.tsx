@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import type { Phase } from '../hooks/useChat';
 import styles from './Composer.module.css';
 
@@ -54,6 +54,20 @@ export function Composer({ value, onChange, onSubmit, onStop, phase }: Props) {
       cancelled = true;
     };
   }, [resize]);
+
+  // The textarea is disabled while a turn runs, and disabling a focused element
+  // blurs it — the browser does not hand focus back when it re-enables. (Sending
+  // by click loses it the same way: the Send button is unmounted and replaced by
+  // Stop.) So once the answer lands, put the cursor back where the next question
+  // goes. Runs on mount too, which doubles as autofocus on load.
+  //
+  // Not on touch, where .focus() also throws up the on-screen keyboard over the
+  // answer the user is trying to read — the same reason Enter does not send there.
+  useEffect(() => {
+    if (phase === 'idle' && navigator.maxTouchPoints === 0) {
+      textareaRef.current?.focus();
+    }
+  }, [phase]);
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     // On touch devices Enter inserts a newline instead of sending — there is
