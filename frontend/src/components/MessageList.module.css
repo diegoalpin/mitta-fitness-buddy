@@ -1,5 +1,8 @@
 .scroller {
   flex: 1;
+  /* Without this a flex item refuses to shrink below its content height, which
+     would push the scrollbar back onto the page. */
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
 }

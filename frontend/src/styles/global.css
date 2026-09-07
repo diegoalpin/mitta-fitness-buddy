@@ -18,7 +18,7 @@ html {
 }
 
 body {
-  min-height: 100dvh;
+  height: 100dvh;
   background: var(--bg);
   color: var(--text-primary);
   font-family: var(--font-sans);
@@ -27,10 +27,17 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Fixed height, not min-height: the shell must be exactly the viewport so the
+   message list overflows internally. Let it grow instead and the page itself
+   becomes the scroller, which puts the only working scrollbar at the window
+   edge and leaves the wheel dead over the messages (.scroller is a scroll
+   container with nothing to scroll, and its overscroll-behavior: contain
+   stops the event chaining up to the document). */
 #root {
-  min-height: 100dvh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 button,

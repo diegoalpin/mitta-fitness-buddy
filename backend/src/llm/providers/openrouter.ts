@@ -39,13 +39,12 @@ import type { ChatEvent, ChatMessage } from '../../types/wire.js';
 const MAX_TOOL_ROUNDS = 8;
 
 /**
- * Caps the visible answer only — unlike Anthropic, reasoning tokens are not
- * drawn from this budget. Training answers include markdown tables, so leave
- * real room.
- */
-const MAX_TOKENS = 8192;
-
-/**
+ * The token budget is OPENROUTER_MAX_TOKENS, not a constant here, because what
+ * it has to cover depends on the model. A non-reasoning model spends it on the
+ * visible answer alone; a reasoning model like openai/gpt-5.6-luna spends it on
+ * hidden reasoning first and the answer second. Training answers include
+ * markdown tables, so a reasoning model needs room for both.
+ *
  * Free-tier models sit behind community capacity and can stall. Fail in
  * minutes rather than hanging the SSE stream indefinitely.
  */
@@ -109,7 +108,14 @@ export async function* streamChat(
           model: config.openrouterModel,
           messages: turns,
           tools,
-          maxTokens: MAX_TOKENS,
+          maxTokens: config.openrouterMaxTokens,
+          // Omitted entirely unless configured. Sending an effort to a model
+          // that does not reason is harmless, but the default model is the
+          // Free Router — one request can land on any of several models, and
+          // there is no single effort that suits all of them.
+          ...(config.openrouterReasoningEffort && {
+            reasoningEffort: config.openrouterReasoningEffort,
+          }),
           stream: true,
         },
       });
@@ -174,13 +180,17 @@ export async function* streamChat(
         if (!emittedText) {
           // The model ended the turn without saying anything visible — most
           // often a reasoning model that spent the turn in `reasoning` and
-          // never wrote an answer. Reporting it beats a blank message bubble
-          // the user cannot distinguish from a hung request.
+          // never wrote an answer. On a reasoning model that usually means the
+          // token budget went entirely on thinking, which is a config problem
+          // rather than a bad question. Reporting it beats a blank message
+          // bubble the user cannot distinguish from a hung request.
           yield {
             type: 'error',
             kind: 'unknown',
             message:
-              'The model finished without producing an answer. Try rephrasing, or switch OPENROUTER_MODEL.',
+              'The model finished without producing an answer. Try rephrasing, or — ' +
+              'on a reasoning model — raise OPENROUTER_MAX_TOKENS or lower ' +
+              'OPENROUTER_REASONING_EFFORT.',
           };
           return;
         }
@@ -330,7 +340,7 @@ function streamErrorEvent(code: number, message: string): ChatEvent {
       type: 'error',
       kind: 'rate_limit',
       message:
-        'OpenRouter is rate limiting this model. Free models throttle hard — wait a moment and try again.',
+        'OpenRouter is rate limiting this model. Wait a moment and try again — free models throttle hard, paid ones only under load.',
     };
   }
   return {
@@ -362,15 +372,14 @@ function toChatEvent(err: unknown): ChatEvent {
       };
     }
 
-    // 402 is OpenRouter's "out of credits". Free models still require a
-    // funded-or-verified account once daily free quota is spent, so this is
-    // the error a $0 budget hits first.
+    // 402 is OpenRouter's "out of credits" — a spent free-tier daily quota on
+    // the free path, and simply an empty balance on a paid model.
     if (err.statusCode === 402) {
       return {
         type: 'error',
         kind: 'upstream_auth',
         message:
-          'OpenRouter rejected the request for lack of credit. The free-tier daily quota may be spent.',
+          'OpenRouter rejected the request for lack of credit. Top up the account, or — on a free model — wait for the daily quota to reset.',
       };
     }
 

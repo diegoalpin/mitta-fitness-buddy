@@ -6,6 +6,7 @@
   max-width: min(42ch, calc(100vw - var(--space-8)));
   max-height: calc(100dvh - var(--space-8));
   overflow-y: auto;
+  margin:auto;
 
   padding: var(--space-6);
 
